@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploy AWS config recorder'
+
+#Build AWS resources
+Resources:
+  #IAM role to allow AWS Config to get the list of your accounts in your organization
+  AWSConfigRecorderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - 'configuration-recorder-role'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - config.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: 
+            !Join
+            - '-'
+            - - !Ref AWS::StackName
+              - 'configuration-recorder-policy'
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:PutObject"
+                Resource:
+                  !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - 'awsmanoj-config-central-bucket'
+                    - '/config/AWSLogs/'
+                    - !Ref 'AWS::AccountId'
+                    - '*'
+                Condition:
+                  StringLike:
+                    's3:x-amz-acl': 'bucket-owner-full-control'
+              - Effect: Allow
+                Action: "s3:GetBucketAcl"
+                Resource: 
+                  !Join
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - 'awsmanoj-config-central-bucket'
+  #AWS config Aggregator
+  ConfigurationAggregator:
+    Type: 'AWS::Config::ConfigurationAggregator'
+    Properties:
+      OrganizationAggregationSource:
+        RoleArn: !GetAtt AWSConfigRole.Arn 
+        AllAwsRegions: true
+      ConfigurationAggregatorName:
+        !Join
+        - '-'
+        - - !Ref AWS::StackName
+          - 'configuration-aggregator'
+
+# Output
+Outputs:
+  StackName:
+    Description: 'Stack name'
+    Value: !Sub '${AWS::StackName}'
