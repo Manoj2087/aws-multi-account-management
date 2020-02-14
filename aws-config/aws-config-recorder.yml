@@ -51,18 +51,19 @@ Resources:
                   - ''
                   - - 'arn:aws:s3:::'
                     - 'awsmanoj-config-central-bucket'
-  #AWS config Aggregator
-  ConfigurationAggregator:
-    Type: 'AWS::Config::ConfigurationAggregator'
-    Properties:
-      OrganizationAggregationSource:
-        RoleArn: !GetAtt AWSConfigRole.Arn 
-        AllAwsRegions: true
-      ConfigurationAggregatorName:
+  #AWS config Recorder
+  ConfigRecorder: 
+    Type: AWS::Config::ConfigurationRecorder
+    Properties: 
+      Name: 
         !Join
         - '-'
         - - !Ref AWS::StackName
-          - 'configuration-aggregator'
+          - 'configuration-recorder'
+      RecordingGroup:
+        AllSupported: true
+        IncludeGlobalResourceTypes: false
+      RoleARN: !GetAtt AWSConfigRecorderRole.Arn
 
 # Output
 Outputs:
